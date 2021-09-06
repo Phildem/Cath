@@ -29,7 +29,7 @@ Release history
 Version Date        Author    Comment
 1.0     30/08/2021  Phildem   First version tested ok
 1.1     05/09/2021  Phildem   Misc fix, better comments and presentation
-
+1.2     06/09/2021  Phildem   Remove unnecessary Cath:: in Cath class definition, (Warning)
 */
 
 
@@ -49,9 +49,9 @@ class Cath{
   unsigned long         m_CurCounter;                     // Curent number of ms before next Loop call
   unsigned long         m_LoopDelay;                      // Default period of Loop call in ms
 
-  static int            Cath::S_NbTask;                   // Actual number of task instances
-  static Cath*          Cath::S_CathTasks[kMaxCathTask];  // Array of task object pointers
-  static  unsigned long Cath::S_LastMilli;                // Used to call every ms
+  static int            S_NbTask;                   // Actual number of task instances
+  static Cath*          S_CathTasks[kMaxCathTask];  // Array of task object pointers
+  static  unsigned long S_LastMilli;                // Used to call every ms
 
   //..............................................................
   // Must be called in task constructors to register in the task list
