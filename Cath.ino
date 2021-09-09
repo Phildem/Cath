@@ -3,6 +3,7 @@ Cath Copyright Cyrob 2021
 Cyrob Arduino Task helper by Philippe Demerliac
 
 See my presentation video in French : https://youtu.be/aGwHYCcQ3Io
+See also for v1.3 : https://youtu.be/ph57EpJPs5E
 
 =====================================================================================
 ==========================   OPEN SOURCE LICENCE   ==================================
@@ -28,30 +29,39 @@ Release history
 ................................................................................................................
 Version Date        Author    Comment
 1.0     30/08/2021  Phildem   First version tested ok
-1.1     05/09/2021  Phildem   Misc fix, better comments and presentation
-1.2     06/09/2021  Phildem   Remove unnecessary Cath:: in Cath class definition, (Warning)
+1.1     05/09/2021  Phildem   Misc fixes, better comments and presentation
+1.2     06/09/2021  Phildem   Remove unnecessary Cath:: in Cath class definition, (Warning removed)
+1.3     08/09/2021  Phildem   Misc comments/name fixes, Memory optimised, __CathOpt_SmallCounter__ option added
 */
 
 
 //____________________________________________________________________________________________________________
-// Start of Cath definition __________________________________________________________________________________
+// Start of Cath definition__________________________________________________________________________________
  
 #define kMaxCathTask    9         // Number max of task instance MUST BE >= at task instancied
+
+#define __CathOpt_SmallCounter__  // Comment this line to allow 32 bit delay, if not period max is 65536 ms
+
+#ifdef __CathOpt_SmallCounter__
+typedef uint16_t CathCnt;
+#else
+typedef uint32_t CathCnt;
+#endif
 
 class Cath{
 
   public:
 
 // Derived class MUST implement these 2 methodes
-  virtual void          SetUp() =0;                       // Called at setup
-  virtual void          Loop()  =0;                       // Called periodically
+  virtual void          SetUp() =0;                 // Called at setup
+  virtual void          Loop()  =0;                 // Called periodically
 
-  unsigned long         m_CurCounter;                     // Curent number of ms before next Loop call
-  unsigned long         m_LoopDelay;                      // Default period of Loop call in ms
+  CathCnt               m_CurCounter;               // Curent number of ms before next Loop call
+  CathCnt               m_LoopDelay;                // Default period of Loop call in ms
 
-  static int            S_NbTask;                   // Actual number of task instances
+  static uint8_t        S_NbTask;                   // Actual number of task instances
   static Cath*          S_CathTasks[kMaxCathTask];  // Array of task object pointers
-  static  unsigned long S_LastMilli;                // Used to call every ms
+  static uint8_t        S_LastMilli;                // Used to call every ms (a byte is enought to detect change)
 
   //..............................................................
   // Must be called in task constructors to register in the task list
@@ -59,7 +69,7 @@ class Cath{
   // Task :   Ptr on the derivated task to register
   // Period : Period of loop call in ms WARNING do not pass 0!
   // Offset : Demay of first call in ms (1 def) WARNING do not pass 0!
-  static void S_Register(Cath* Task,unsigned long Period,unsigned long Offset=1){
+  static void S_Register(Cath* Task,CathCnt Period,CathCnt Offset=1){
     Task->m_LoopDelay=Period;
     Task->m_CurCounter= Offset;
     Cath::S_CathTasks[Cath::S_NbTask++]=Task;
@@ -75,7 +85,7 @@ class Cath{
    //..............................................................
   // Must be called once in Arduino Loop to call all the task loop if needed
   static void S_Loop(){
-    unsigned long CurMilli=millis();
+    uint8_t CurMilli=millis();
     if (CurMilli!=S_LastMilli) {
       S_LastMilli=CurMilli;
       for(int T=0;T<S_NbTask;T++) 
@@ -88,10 +98,11 @@ class Cath{
 
 };
 
-//Cath static var def
-int            Cath::S_NbTask=0;
-Cath*          Cath::S_CathTasks[kMaxCathTask];
-unsigned long  Cath::S_LastMilli=0;
+//Cath static var def 
+//(Note set to 0 for code clarity but done by default anyway because they are static)
+uint8_t       Cath::S_NbTask=0;
+Cath*         Cath::S_CathTasks[kMaxCathTask];
+uint8_t       Cath::S_LastMilli=0;                 
 
 // End of Cath definition ___________________________________________________________________________________
 //___________________________________________________________________________________________________________
@@ -100,21 +111,22 @@ unsigned long  Cath::S_LastMilli=0;
 //****************************************************************************************************************
 // I/O Abstraction
 
-#define kOutPinSlowBlink  4
-#define kOutPinFastBlink  5
+#define kOutPinSlowBlink  4     // Output pins where different leds are connected
+#define kOutPinFastBlink  5     
 #define kOutPinAssyBlink  6
 #define kOutPinAorB       7
 #define kOutPinAandB      8
 #define kOutPinAxorB      9
-#define kInPinA           2
+
+#define kInPinA           2     // Input pins where pushbuttons are connected (Internal pullup required)
 #define kInPinB           3
 
 
 //****************************************************************************************************************
 // Globals
 
-bool GPushA=false;      // Memory state of button A, true if pushed, debounced
-bool GPushB=false;      // Memory state of button A, true if pushed, debounced
+bool gPushA=false;      // Memory state of button A, true if pushed, debounced
+bool gPushB=false;      // Memory state of button B, true if pushed, debounced
 
 //Exemple task ...........................................................................................
 
@@ -206,7 +218,7 @@ class PinAorB: public Cath{
   }
 
   void Loop(){
-    digitalWrite(kOutPinAorB, GPushA || GPushB);
+    digitalWrite(kOutPinAorB, gPushA || gPushB);
   }
 };
 
@@ -224,7 +236,7 @@ class PinAandB: public Cath{
   }
 
   void Loop(){
-    digitalWrite(kOutPinAandB, GPushA && GPushB);
+    digitalWrite(kOutPinAandB, gPushA && gPushB);
   }
 };
 
@@ -242,7 +254,7 @@ class PinAxorB: public Cath{
   }
 
   void Loop(){
-    digitalWrite(kOutPinAxorB, !GPushA != !GPushB && !digitalRead(kOutPinAxorB));
+    digitalWrite(kOutPinAxorB, !gPushA != !gPushB && !digitalRead(kOutPinAxorB));
   }
 };
 
@@ -255,8 +267,8 @@ Blinker   Blinker1(kOutPinSlowBlink,500);
 Blinker   Blinker2(kOutPinFastBlink,1500,500);
 
 // 2 Instances of the PushBut task
-PushBut   PushA(kInPinA,&GPushA);
-PushBut   PushB(kInPinB,&GPushB);
+PushBut   PushA(kInPinA,&gPushA);
+PushBut   PushB(kInPinB,&gPushB);
 
 // 1 instance by tasks for these one
 ABlinker  Assy;
