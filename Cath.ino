@@ -32,15 +32,16 @@ Version Date        Author    Comment
 1.1     05/09/2021  Phildem   Misc fixes, better comments and presentation
 1.2     06/09/2021  Phildem   Remove unnecessary Cath:: in Cath class definition, (Warning removed)
 1.3     08/09/2021  Phildem   Misc comments/name fixes, Memory optimised, __CathOpt_SmallCounter__ option added
+1.4     13/09/2021  Soif      Fixes english comments & indentation
 */
 
 
 //____________________________________________________________________________________________________________
 // Start of Cath definition__________________________________________________________________________________
  
-#define kMaxCathTask    9         // Number max of task instance MUST BE >= at task instancied
+#define kMaxCathTask    9         // Max Number of task instances. MUST BE >= to tasks instancied
 
-#define __CathOpt_SmallCounter__  // Comment this line to allow 32 bit delay, if not period max is 65536 ms
+#define __CathOpt_SmallCounter__  // Comment this line to allow 32 bit delay. If not, max period is 65536 ms
 
 #ifdef __CathOpt_SmallCounter__
 typedef uint16_t CathCnt;
@@ -48,16 +49,17 @@ typedef uint16_t CathCnt;
 typedef uint32_t CathCnt;
 #endif
 
+
 class Cath{
 
   public:
 
-// Derived class MUST implement these 2 methodes
+// Derived class MUST implement these 2 methods
   virtual void          SetUp() =0;                 // Called at setup
   virtual void          Loop()  =0;                 // Called periodically
 
   CathCnt               m_CurCounter;               // Curent number of ms before next Loop call
-  CathCnt               m_LoopDelay;                // Default period of Loop call in ms
+  CathCnt               m_LoopDelay;                // Default period of Loop call (in ms)
 
   static uint8_t        S_NbTask;                   // Actual number of task instances
   static Cath*          S_CathTasks[kMaxCathTask];  // Array of task object pointers
@@ -66,9 +68,9 @@ class Cath{
   //..............................................................
   // Must be called in task constructors to register in the task list
   // WARNING : think to set kMaxCathTask as needed
-  // Task :   Ptr on the derivated task to register
-  // Period : Period of loop call in ms WARNING do not pass 0!
-  // Offset : Demay of first call in ms (1 def) WARNING do not pass 0!
+  // Task   : Pointer to the derivated task to register
+  // Period : Loop call Period (in ms). WARNING do not pass 0!
+  // Offset : Delay of the first call in ms (1 def). WARNING do not pass 0!
   static void S_Register(Cath* Task,CathCnt Period,CathCnt Offset=1){
     Task->m_LoopDelay=Period;
     Task->m_CurCounter= Offset;
@@ -92,20 +94,22 @@ class Cath{
         if ( Cath::S_CathTasks[T]->m_CurCounter--==0) {
           Cath::S_CathTasks[T]->m_CurCounter=Cath::S_CathTasks[T]->m_LoopDelay;
           Cath::S_CathTasks[T]->Loop();
-          }
-    }
+        }
+     }
   }
 
 };
 
-//Cath static var def 
+//Cath static variables definitions 
 //(Note set to 0 for code clarity but done by default anyway because they are static)
 uint8_t       Cath::S_NbTask=0;
 Cath*         Cath::S_CathTasks[kMaxCathTask];
-uint8_t       Cath::S_LastMilli=0;                 
+uint8_t       Cath::S_LastMilli=0;
 
 // End of Cath definition ___________________________________________________________________________________
 //___________________________________________________________________________________________________________
+
+
 
 
 //****************************************************************************************************************
