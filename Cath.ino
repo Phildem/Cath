@@ -32,6 +32,7 @@ Version Date        Author    Comment
 1.1     05/09/2021  Phildem   Misc fixes, better comments and presentation
 1.2     06/09/2021  Phildem   Remove unnecessary Cath:: in Cath class definition, (Warning removed)
 1.3     08/09/2021  Phildem   Misc comments/name fixes, Memory optimised, __CathOpt_SmallCounter__ option added
+1.4     13/09/2021  Soif      Fixes english comments & indentation
 */
 
 
