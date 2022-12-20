@@ -33,6 +33,7 @@ Version Date        Author    Comment
 1.2     06/09/2021  Phildem   Remove unnecessary Cath:: in Cath class definition, (Warning removed)
 1.3     08/09/2021  Phildem   Misc comments/name fixes, Memory optimised, __CathOpt_SmallCounter__ option added
 1.4     13/09/2021  Soif      Fixes english comments & indentation
+1.5     20/12/2022  FCerbell  Added an home-made nonblocking "delay()"
 */
 
 
@@ -49,6 +50,18 @@ typedef uint16_t CathCnt;
 typedef uint32_t CathCnt;
 #endif
 
+// Non blocking delay() to use in parallelized state machines
+// max = 4,294,967,295
+#define smWaitForMs(x) \
+  static unsigned long __FILE__##__LINE__ = 0; \
+  if (__FILE__##__LINE__ == 0) { \
+    __FILE__##__LINE__ = millis(); \
+    return; \
+  } else if (millis() - __FILE__##__LINE__ < x) \
+    return; \
+  else { \
+    __FILE__##__LINE__ = 0; \
+  }
 
 class Cath{
 
